@@ -170,7 +170,7 @@ curl -H "Authorization: Bearer <token>" \
 
 4. **Parameterized queries everywhere** - All user input is properly escaped to prevent SQL injection.
 
-5. **Production-ready error handling** - Removed all `console.log` statements; errors return appropriate HTTP status codes.
+
 
 ---
 
