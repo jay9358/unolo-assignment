@@ -16,16 +16,16 @@ function History({ user }) {
         try {
             let url = '/checkin/history';
             const params = new URLSearchParams();
-            
+
             if (startDate) params.append('start_date', startDate);
             if (endDate) params.append('end_date', endDate);
-            
+
             if (params.toString()) {
                 url += '?' + params.toString();
             }
 
             const response = await api.get(url);
-            
+
             if (response.data.success) {
                 setCheckins(response.data.data);
             }
@@ -42,7 +42,7 @@ function History({ user }) {
         fetchHistory();
     };
 
-    const totalHours = checkins.reduce((total, checkin) => {
+    const totalHours = (checkins || []).reduce((total, checkin) => {
         if (checkin.checkout_time) {
             const checkinTime = new Date(checkin.checkin_time);
             const checkoutTime = new Date(checkin.checkout_time);
@@ -146,7 +146,7 @@ function History({ user }) {
                             {checkins.map((checkin) => {
                                 const checkinTime = new Date(checkin.checkin_time);
                                 const checkoutTime = checkin.checkout_time ? new Date(checkin.checkout_time) : null;
-                                const duration = checkoutTime 
+                                const duration = checkoutTime
                                     ? ((checkoutTime - checkinTime) / (1000 * 60 * 60)).toFixed(1) + 'h'
                                     : 'Active';
 
@@ -164,11 +164,10 @@ function History({ user }) {
                                             {checkoutTime ? checkoutTime.toLocaleTimeString() : '-'}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded text-xs ${
-                                                duration === 'Active' 
-                                                    ? 'bg-green-100 text-green-800' 
+                                            <span className={`px-2 py-1 rounded text-xs ${duration === 'Active'
+                                                    ? 'bg-green-100 text-green-800'
                                                     : 'bg-gray-100 text-gray-800'
-                                            }`}>
+                                                }`}>
                                                 {duration}
                                             </span>
                                         </td>
