@@ -4,6 +4,25 @@ const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
+/**
+ * Calculate distance between two points using Haversine formula
+ * @param {number} lat1 - Latitude of point 1
+ * @param {number} lon1 - Longitude of point 1
+ * @param {number} lat2 - Latitude of point 2
+ * @param {number} lon2 - Longitude of point 2
+ * @returns {number} Distance in kilometers
+ */
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 100) / 100; // Round to 2 decimal places
+}
+
 // Get assigned clients for employee
 router.get('/clients', authenticateToken, async (req, res) => {
     try {
@@ -16,7 +35,6 @@ router.get('/clients', authenticateToken, async (req, res) => {
 
         res.json({ success: true, data: clients });
     } catch (error) {
-        console.error('Get clients error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch clients' });
     }
 });
@@ -53,21 +71,35 @@ router.post('/', authenticateToken, async (req, res) => {
             });
         }
 
+        // Get client location to calculate distance
+        const [clients] = await pool.execute(
+            'SELECT latitude, longitude FROM clients WHERE id = ?',
+            [client_id]
+        );
+
+        let distanceFromClient = null;
+        if (clients.length > 0 && latitude && longitude && clients[0].latitude && clients[0].longitude) {
+            distanceFromClient = calculateHaversineDistance(
+                latitude, longitude,
+                clients[0].latitude, clients[0].longitude
+            );
+        }
+
         const [result] = await pool.execute(
-            `INSERT INTO checkins (employee_id, client_id, lat, lng, notes, status)
-             VALUES (?, ?, ?, ?, ?, 'checked_in')`,
-            [req.user.id, client_id, latitude, longitude, notes || null]
+            `INSERT INTO checkins (employee_id, client_id, latitude, longitude, distance_from_client, notes, status)
+             VALUES (?, ?, ?, ?, ?, ?, 'checked_in')`,
+            [req.user.id, client_id, latitude || null, longitude || null, distanceFromClient, notes || null]
         );
 
         res.status(201).json({
             success: true,
             data: {
                 id: result.insertId,
+                distance_from_client: distanceFromClient,
                 message: 'Checked in successfully'
             }
         });
     } catch (error) {
-        console.error('Check-in error:', error);
         res.status(500).json({ success: false, message: 'Check-in failed' });
     }
 });
@@ -91,7 +123,6 @@ router.put('/checkout', authenticateToken, async (req, res) => {
 
         res.json({ success: true, message: 'Checked out successfully' });
     } catch (error) {
-        console.error('Checkout error:', error);
         res.status(500).json({ success: false, message: 'Checkout failed' });
     }
 });
@@ -124,7 +155,6 @@ router.get('/history', authenticateToken, async (req, res) => {
 
         res.json({ success: true, data: checkins });
     } catch (error) {
-        console.error('History error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch history' });
     }
 });
@@ -146,7 +176,6 @@ router.get('/active', authenticateToken, async (req, res) => {
             data: checkins.length > 0 ? checkins[0] : null
         });
     } catch (error) {
-        console.error('Active checkin error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch active check-in' });
     }
 });
