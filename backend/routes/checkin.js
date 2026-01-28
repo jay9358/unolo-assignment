@@ -110,10 +110,12 @@ router.get('/history', authenticateToken, async (req, res) => {
         const params = [req.user.id];
 
         if (start_date) {
-            query += ` AND DATE(ch.checkin_time) >= '${start_date}'`;
+            query += ` AND DATE(ch.checkin_time) >= ?`;
+            params.push(start_date);
         }
         if (end_date) {
-            query += ` AND DATE(ch.checkin_time) <= '${end_date}'`;
+            query += ` AND DATE(ch.checkin_time) <= ?`;
+            params.push(end_date);
         }
 
         query += ' ORDER BY ch.checkin_time DESC';
