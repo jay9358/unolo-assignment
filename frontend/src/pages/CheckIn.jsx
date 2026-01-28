@@ -1,5 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../utils/api';
+
+/**
+ * Calculate distance between two points using Haversine formula
+ * @returns {number} Distance in kilometers
+ */
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 100) / 100;
+}
 
 function CheckIn({ user }) {
     const [clients, setClients] = useState([]);
@@ -11,6 +26,17 @@ function CheckIn({ user }) {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    // Calculate distance when client is selected
+    const distanceFromClient = useMemo(() => {
+        if (!selectedClient || !location) return null;
+        const client = clients.find(c => c.id === parseInt(selectedClient));
+        if (!client || !client.latitude || !client.longitude) return null;
+        return calculateHaversineDistance(
+            location.latitude, location.longitude,
+            client.latitude, client.longitude
+        );
+    }, [selectedClient, location, clients]);
 
     useEffect(() => {
         fetchData();
@@ -46,8 +72,7 @@ function CheckIn({ user }) {
                         longitude: position.coords.longitude
                     });
                 },
-                (err) => {
-                    console.error('Location error:', err);
+                () => {
                     // Set default location (Gurugram) for testing
                     setLocation({ latitude: 28.4595, longitude: 77.0266 });
                 }
@@ -185,6 +210,32 @@ function CheckIn({ user }) {
                                 ))}
                             </select>
                         </div>
+
+                        {/* Distance Display */}
+                        {distanceFromClient !== null && (
+                            <div className={`mb-4 p-4 rounded-lg ${distanceFromClient > 0.5 ? 'bg-yellow-50 border border-yellow-200' : 'bg-green-50 border border-green-200'}`}>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className={`text-sm font-medium ${distanceFromClient > 0.5 ? 'text-yellow-800' : 'text-green-800'}`}>
+                                            Distance from client
+                                        </p>
+                                        <p className={`text-2xl font-bold ${distanceFromClient > 0.5 ? 'text-yellow-700' : 'text-green-700'}`}>
+                                            {distanceFromClient} km
+                                        </p>
+                                    </div>
+                                    {distanceFromClient > 0.5 && (
+                                        <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                                            ⚠️ Far from location
+                                        </div>
+                                    )}
+                                </div>
+                                {distanceFromClient > 0.5 && (
+                                    <p className="text-sm text-yellow-700 mt-2">
+                                        You are far from the client location. Please verify your position.
+                                    </p>
+                                )}
+                            </div>
+                        )}
 
                         <div className="mb-4">
                             <label className="block text-gray-700 text-sm font-medium mb-2">
