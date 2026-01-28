@@ -139,6 +139,7 @@ function History({ user }) {
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Check-in</th>
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Check-out</th>
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Duration</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Distance</th>
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Notes</th>
                             </tr>
                         </thead>
@@ -165,11 +166,21 @@ function History({ user }) {
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className={`px-2 py-1 rounded text-xs ${duration === 'Active'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-gray-100 text-gray-800'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {duration}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {checkin.distance_from_client != null ? (
+                                                <span className={`px-2 py-1 rounded text-xs ${checkin.distance_from_client > 0.5
+                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                    : 'bg-green-100 text-green-800'
+                                                    }`}>
+                                                    {checkin.distance_from_client} km
+                                                </span>
+                                            ) : '-'}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">
                                             {checkin.notes || '-'}
