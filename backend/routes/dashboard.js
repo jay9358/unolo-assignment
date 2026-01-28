@@ -44,6 +44,7 @@ router.get('/stats', authenticateToken, requireManager, async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('Dashboard stats error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch dashboard stats' });
     }
 });
@@ -76,7 +77,7 @@ router.get('/employee', authenticateToken, async (req, res) => {
             `SELECT COUNT(*) as total_checkins,
                     COUNT(DISTINCT client_id) as unique_clients
              FROM checkins
-             WHERE employee_id = ? AND checkin_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)`,
+             WHERE employee_id = ? AND checkin_time >= datetime('now', '-7 days')`,
             [req.user.id]
         );
 
@@ -89,6 +90,7 @@ router.get('/employee', authenticateToken, async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('Employee dashboard error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch dashboard' });
     }
 });

@@ -5,20 +5,27 @@ function Counter({ initialValue = 0, showDouble = true }) {
     const [isRunning, setIsRunning] = useState(false);
     const countRef = useRef(count);
 
+    // Keep ref in sync with count (Bug fix: ref was never updated)
+    useEffect(() => {
+        countRef.current = count;
+    }, [count]);
+
+    // Fixed: Use functional update to avoid stale closure
     useEffect(() => {
         if (isRunning) {
             const interval = setInterval(() => {
-                setCount(count + 1);
+                setCount(c => c + 1); // Fixed: was count + 1 (stale closure)
             }, 1000);
             return () => clearInterval(interval);
         }
     }, [isRunning]);
 
-    if (showDouble) {
-        useEffect(() => {
+    // Fixed: Moved useEffect outside conditional - hooks cannot be called conditionally
+    useEffect(() => {
+        if (showDouble) {
             console.log('Double value:', count * 2);
-        }, [count]);
-    }
+        }
+    }, [count, showDouble]);
 
     const logCount = () => {
         console.log('Count from ref:', countRef.current);
