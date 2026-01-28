@@ -161,22 +161,3 @@ useEffect(() => {
 
 **Why this fix is correct:**
 Functional updates always use the latest state value. Hooks must be called unconditionally every render. The ref now stays synchronized with the actual count.
-
-
-## Additional Fixes: SQLite Compatibility
-
-**What was wrong:**
-Some SQL used MySQL syntax that SQLite doesnt support.
-
-**Where I found it:**
-backend/routes/checkin.js line 120, backend/routes/dashboard.js line 80
-
-**How I fixed it:**
-| MySQL | SQLite |
-|-------|--------|
-| NOW() | datetime('now') |
-| DATE_SUB(NOW(), INTERVAL 7 DAY) | datetime('now', '-7 days') |
-| "string" | 'string' |
-
-**Why this fix is correct:**
-SQLite uses different functions for current time and date math. Single quotes are required for string literals in SQLite.
